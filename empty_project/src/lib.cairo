@@ -1,5 +1,3 @@
-mod rare_lib;
-
 /// Interface representing `HelloContract`.
 /// This interface allows modification and retrieval of the contract balance.
 #[starknet::interface]
@@ -8,14 +6,12 @@ pub trait IHelloStarknet<TContractState> {
     fn increase_balance(ref self: TContractState, amount: felt252);
     /// Retrieve contract balance.
     fn get_balance(self: @TContractState) -> felt252;
-    fn get_balance_6x(self: @TContractState) -> felt252;
 }
 
 /// Simple contract for managing balance.
 #[starknet::contract]
 mod HelloStarknet {
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
-    use crate::rare_lib::internal_mul_by_magic_number;
 
     #[storage]
     struct Storage {
@@ -30,12 +26,7 @@ mod HelloStarknet {
         }
 
         fn get_balance(self: @ContractState) -> felt252 {
-            // private_magic_number(); // Compilation error
             self.balance.read()
-        }
-
-        fn get_balance_6x(self: @ContractState) -> felt252 {
-            internal_mul_by_magic_number(self.balance.read())
         }
     }
 }

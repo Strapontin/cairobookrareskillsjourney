@@ -2,8 +2,10 @@ use starknet::ContractAddress;
 
 use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
 
-use functionvisibility5::IHelloStarknetDispatcher;
-use functionvisibility5::IHelloStarknetDispatcherTrait;
+use cairostoragevariabletypes6::IHelloStarknetSafeDispatcher;
+use cairostoragevariabletypes6::IHelloStarknetSafeDispatcherTrait;
+use cairostoragevariabletypes6::IHelloStarknetDispatcher;
+use cairostoragevariabletypes6::IHelloStarknetDispatcherTrait;
 
 fn deploy_contract(name: ByteArray) -> ContractAddress {
     let contract = declare(name).unwrap().contract_class();
@@ -26,24 +28,20 @@ fn test_increase_balance() {
     assert(balance_after == 42, 'Invalid balance');
 }
 
-// NEWLY ADDED //
 #[test]
-fn test_balance_x6() {
-    // Deploy the HelloStarknet contract
+#[feature("safe_dispatcher")]
+fn test_cannot_increase_balance_with_zero_value() {
     let contract_address = deploy_contract("HelloStarknet");
 
-    // Create a dispatcher to interact with the contract
-    let dispatcher = IHelloStarknetDispatcher { contract_address };
+    let safe_dispatcher = IHelloStarknetSafeDispatcher { contract_address };
 
-    // Verify initial balance is 0
-    let balance_before = dispatcher.get_balance();
+    let balance_before = safe_dispatcher.get_balance().unwrap();
     assert(balance_before == 0, 'Invalid balance');
 
-    // Increase balance by 1
-    dispatcher.increase_balance(1);
-
-    // Call get_balance_6x which uses the internal function
-    // Should return 1 * 6 = 6 (multiplied by the magic number)
-    let balance_after_6x = dispatcher.get_balance_6x();
-    assert(balance_after_6x == 6, 'Invalid balance');
+    match safe_dispatcher.increase_balance(0) {
+        Result::Ok(_) => core::panic_with_felt252('Should have panicked'),
+        Result::Err(panic_data) => {
+            assert(*panic_data.at(0) == 'Amount cannot be 0', *panic_data.at(0));
+        }
+    };
 }
